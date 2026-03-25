@@ -434,7 +434,37 @@ function TinaApp() {
                 )}
               </AnimatePresence>
 
-              {!activeProject.images?.length ? (
+              <div className="flex justify-end mb-4">
+                <motion.label
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-2 px-4 py-2 text-white rounded-xl text-[13px] font-medium transition-all cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)',
+                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
+                  }}
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload images
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </motion.label>
+              </div>
+
+              {activeProject.images?.length ? (
+                <SortableImageGrid
+                  images={activeProject.images}
+                  selectedIndex={selectedImageIndex}
+                  onImageClick={handleImageClick}
+                  onDeleteImage={handleDeleteImage}
+                  onReorder={handleReorderImages}
+                />
+              ) : (
                 <div className="flex flex-col items-center justify-center py-24">
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
@@ -445,36 +475,10 @@ function TinaApp() {
                   <p className="mb-1.5 text-[15px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                     Drop 360 images here
                   </p>
-                  <p className="mb-5 text-[13px]" style={{ color: 'var(--color-text-tertiary)' }}>
-                    or click to browse
+                  <p className="text-[13px]" style={{ color: 'var(--color-text-tertiary)' }}>
+                    or use the upload button above
                   </p>
-                  <motion.label
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-5 py-2.5 text-white rounded-xl text-[15px] font-medium transition-all cursor-pointer"
-                    style={{
-                      background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)',
-                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
-                    }}
-                  >
-                    Upload images
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </motion.label>
                 </div>
-              ) : (
-                <SortableImageGrid
-                  images={activeProject.images}
-                  selectedIndex={selectedImageIndex}
-                  onImageClick={handleImageClick}
-                  onDeleteImage={handleDeleteImage}
-                  onReorder={handleReorderImages}
-                />
               )}
             </motion.div>
           )}
