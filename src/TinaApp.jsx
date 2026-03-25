@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Upload, ExternalLink, X } from 'lucide-react';
+import { Plus, Upload, ExternalLink, X, LogOut } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
+import { useAuth } from './contexts/AuthContext';
 import { projectsAPI, imagesAPI, getImageUrl } from './utils/api';
 import CreateProjectModal from './components/CreateProjectModal';
 import TouchPad from './components/TouchPad';
@@ -14,6 +15,7 @@ const VIEWER_CHANNEL = 'tina-viewer';
 function TinaApp() {
   const location = useLocation();
   const navigate = useNavigate();
+  const auth = useAuth();
   const [projects, setProjects] = useState([]);
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [currentView, setCurrentView] = useState('home');
@@ -341,6 +343,19 @@ function TinaApp() {
               )}
             </>
           )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={auth.logout}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all text-[13px] font-medium"
+            style={{
+              background: 'var(--color-bg-tertiary)',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </motion.button>
           <ThemeToggle />
         </div>
       </header>

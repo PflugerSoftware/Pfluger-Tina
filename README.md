@@ -1,17 +1,23 @@
 # TINA - 360 Image Viewer
 
-A web application for viewing and managing 360-degree panoramic images. Organize images into projects, upload equirectangular images, and view them in an interactive panorama viewer.
+A web application for viewing and managing 360-degree panoramic images. Two modes: an admin interface for managing projects/images (designed for touchscreen + projector), and a client view for browsing 360 panoramas on a desktop.
 
 ## Features
 
-- **Project Organization**: Create projects to organize your 360 images
-- **Drag & Drop Upload**: Upload images by dragging them into the project view
-- **Interactive Viewer**: Opens in a separate window for full-screen panorama viewing
-- **TouchPad Controls**: Pan and zoom the 360 view from the main window
-- **Thumbnail Navigation**: Browse through images with a thumbnail strip
+### Admin Mode (Pfluger)
+- **Project Organization**: Create and manage projects
+- **Drag & Drop Upload**: Upload equirectangular 360 images
+- **Interactive Viewer**: Opens in a separate popup window for projector display
+- **TouchPad Controls**: Pan and zoom the 360 view from a touchscreen
 - **Drag to Reorder**: Reorder images within a project
-- **Dark/Light Theme**: Toggle between themes with system preference detection
-- **Responsive Design**: Works on desktop and tablet devices
+- **Dark/Light Theme**: Toggle between themes
+
+### Client Mode (Project Login)
+- **Read-Only Gallery**: View a single project's images
+- **Inline 360 Viewer**: Pannellum panorama with mouse controls directly in the page
+- **Thumbnail Navigation**: Browse images via thumbnail strip below the viewer
+- **Analytics**: Tracks which images are viewed and for how long
+- **Clean URLs**: `/:project-name` for gallery, `/:project-name/360` for viewer
 
 ## Tech Stack
 
@@ -33,8 +39,8 @@ A web application for viewing and managing 360-degree panoramic images. Organize
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/tina-360-viewer.git
-cd tina-360-viewer
+git clone https://github.com/PflugerSoftware/Pfluger-Tina.git
+cd Pfluger-Tina
 ```
 
 ### 2. Install Dependencies
@@ -46,20 +52,14 @@ npm install
 ### 3. Set Up Supabase
 
 1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** and run the migration:
-   - Open `supabase/migrations/001_initial_schema.sql`
-   - Copy the contents and run it in the SQL Editor
-3. Go to **Settings > API** and copy your:
-   - Project URL
-   - Anon/Public key
+2. Go to **SQL Editor** and run both migrations:
+   - `supabase/migrations/001_initial_schema.sql` - tables, indexes, RLS, storage
+   - `supabase/migrations/002_analytics.sql` - analytics tracking table
+3. Go to **Settings > API** and copy your Project URL and Anon/Public key
 
 ### 4. Configure Environment Variables
 
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your Supabase credentials:
+Create a `.env` file in the project root:
 
 ```env
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
@@ -74,60 +74,45 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-## Usage
+## Authentication
 
-### Creating a Project
+Login is password-gated with hardcoded credentials in `src/config/passwords.ts`.
 
-1. Click the **+** button next to the "TINA" title
-2. Enter a project name
-3. Click "Create"
+- **Pfluger (Admin)**: Full access to all projects, upload, delete, reorder
+- **Project logins**: Read-only access to a single project
 
-### Uploading Images
-
-1. Open a project by clicking on it
-2. Drag and drop equirectangular 360 images onto the page
-3. Or click "Upload images" to browse for files
-
-### Viewing 360 Images
-
-1. Click on any image thumbnail to open the viewer
-2. A separate viewer window opens with the 360 panorama
-3. Use the TouchPad in the main window to:
-   - **Drag** to pan around the image
-   - **Scroll** to zoom in/out
-   - Click **thumbnails** to switch images
-   - Use **arrow buttons** to navigate
-
-### Reordering Images
-
-- Hover over an image to see the drag handle (grip icon)
-- Drag images to reorder them
-
-### Deleting
-
-- **Images**: Hover and click the red X button
-- **Projects**: Hover over a project card and click the red X button
+To add a new project login, add the project's UUID and password to the `PASSWORDS` object in `src/config/passwords.ts`. Only projects with a password entry appear in the client dropdown.
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── CreateProjectModal.jsx  # New project dialog
-│   ├── SortableImageGrid.jsx   # Draggable image grid
-│   ├── ThemeToggle.tsx         # Light/dark mode toggle
-│   ├── TouchPad.jsx            # Pan/zoom controls
-│   └── ViewerPage.jsx          # Pannellum 360 viewer
+│   ├── ClientApp.tsx          # Client mode shell (gallery/viewer toggle)
+│   ├── CreateProjectModal.jsx # New project dialog
+│   ├── DesktopView.tsx        # Inline 360 viewer with mouse controls
+│   ├── ImageGallery.tsx       # Read-only image grid (client mode)
+│   ├── LoginPage.tsx          # Login screen with dropdown + password
+│   ├── ProtectedRoute.tsx     # Route guard
+│   ├── SortableImageGrid.jsx  # Draggable image grid (admin mode)
+│   ├── ThemeToggle.tsx        # Light/dark mode toggle
+│   ├── TouchPad.jsx           # Pan/zoom controls (admin mode)
+│   └── ViewerPage.jsx         # Pannellum 360 viewer popup (admin mode)
+├── config/
+│   └── passwords.ts           # Hardcoded login credentials
 ├── contexts/
+│   ├── AuthContext.tsx         # Auth state (mode, project, session)
 │   └── ThemeContext.tsx        # Theme state management
 ├── lib/
-│   └── supabase.ts             # Supabase client
+│   └── supabase.ts            # Supabase client
 ├── utils/
-│   └── api.js                  # API functions for projects/images
-├── App.tsx                     # Router setup
-├── TinaApp.jsx                 # Main application
-├── main.tsx                    # Entry point
-└── index.css                   # Global styles & theme variables
+│   ├── analytics.ts           # View tracking (client mode)
+│   ├── api.js                 # API functions for projects/images
+│   └── pannellum.ts           # Shared Pannellum loader
+├── App.tsx                    # Router setup
+├── TinaApp.jsx                # Admin application
+├── main.tsx                   # Entry point
+└── index.css                  # Global styles & theme variables
 ```
 
 ## Database Schema
@@ -158,69 +143,64 @@ src/
 | display_order | INTEGER | Sort order |
 | created_at | TIMESTAMP | Upload date |
 
+**tina_analytics**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| session_id | TEXT | Browser session identifier |
+| project_id | UUID | Foreign key to project |
+| image_id | UUID | Foreign key to image |
+| image_filename | TEXT | Human-readable filename |
+| started_at | TIMESTAMP | When the image was opened |
+| duration_seconds | INTEGER | How long it was viewed |
+
 ### Storage
 
 - **Bucket**: `tina-images`
 - **Structure**: `{project_id}/{timestamp}-{filename}`
 - **Thumbnails**: `{project_id}/thumbs/{timestamp}-{filename}.jpg`
 
-## Deployment
+## Infrastructure
 
-### Vercel
+### Hosting - Cloudflare Pages
 
-```bash
-npm run build
-# Deploy the dist/ folder
-```
+The app is deployed on **Cloudflare Pages** with automatic deploys from GitHub.
 
-### Netlify
+- **Pages project**: `pfluger-tina`
+- **Production URL**: `pfluger-tina.pages.dev`
+- **Production branch**: `main` (pushes trigger automatic deploys)
+- **Build command**: `npm run build`
+- **Output directory**: `dist`
+- **Environment variables**: Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the Cloudflare Pages dashboard under Settings > Variables and Secrets
 
-```bash
-npm run build
-# Deploy the dist/ folder
-```
+### DNS - Bluehost
 
-### Cloudflare Pages
+DNS is managed through **Bluehost**. A CNAME record points the custom subdomain to Cloudflare Pages:
 
-1. Connect your GitHub repository
-2. Set build command: `npm run build`
-3. Set output directory: `dist`
-4. Add environment variables in dashboard
+| Type | Name | Value | TTL |
+|------|------|-------|-----|
+| CNAME | tina | pfluger-tina.pages.dev | 4 Hours |
 
-## Customization
+This routes `tina.pflugerarchitects.com` to the Cloudflare Pages deployment. Bluehost is DNS only - no backend or hosting runs there.
 
-### User Email
+### Backend - Supabase
 
-By default, the app uses `default@user.com` for the user identifier. To customize:
+All backend services are provided by **Supabase** (no custom server):
 
-```javascript
-import { setUserEmail } from './utils/api';
+- **Database**: PostgreSQL (tables: `tina_projects`, `tina_images`, `tina_analytics`)
+- **File Storage**: `tina-images` bucket (public read, open write)
+- **Auth**: Password-gated via hardcoded credentials in client code (no Supabase Auth)
+- **RLS**: Open policies (`USING (true)`) on all tables
 
-// Set on app initialization
-setUserEmail('your-email@example.com');
-```
+## Routes
 
-### Theme Colors
-
-Edit CSS variables in `src/index.css`:
-
-```css
-:root {
-  --color-bg-primary: #ffffff;
-  --color-text-primary: #1d1d1f;
-  /* ... */
-}
-
-.dark {
-  --color-bg-primary: #000000;
-  --color-text-primary: #f5f5f7;
-  /* ... */
-}
-```
-
-## License
-
-MIT
+| Path | Mode | Description |
+|------|------|-------------|
+| `/login` | - | Login screen |
+| `/` | Admin | Project list and management |
+| `/viewer` | Admin | Popup 360 viewer window |
+| `/:project-name` | Client | Read-only image gallery |
+| `/:project-name/360` | Client | Inline 360 viewer |
 
 ## Credits
 
