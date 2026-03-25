@@ -78,8 +78,10 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 Login is password-gated with hardcoded credentials in `src/config/passwords.ts`.
 
-- **Pfluger (Admin)**: Full access to all projects, upload, delete, reorder
-- **Project logins**: Read-only access to a single project
+| Login | Password | Mode |
+|-------|----------|------|
+| Pfluger (Admin) | `Pfluger1010!` | Full access - all projects, upload, delete, reorder |
+| Flour Bluff | `Hornets2026!` | Read-only - Flour Bluff project images only |
 
 To add a new project login, add the project's UUID and password to the `PASSWORDS` object in `src/config/passwords.ts`. Only projects with a password entry appear in the client dropdown.
 
