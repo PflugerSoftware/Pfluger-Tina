@@ -4,6 +4,7 @@
 
 - **Dev server**: `npm run dev` (runs on http://localhost:5173)
 - **Build**: `npm run build` (outputs to `dist/`)
+- **Deploy**: `npm run build && npx wrangler pages deploy dist --project-name=pfluger-tina --branch=main`
 - **Lint**: `npm run lint`
 
 ## Architecture

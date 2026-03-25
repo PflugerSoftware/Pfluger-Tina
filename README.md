@@ -162,16 +162,26 @@ src/
 
 ## Infrastructure
 
-### Hosting - Cloudflare Pages
+### Hosting - Cloudflare Pages (Direct Upload)
 
-The app is deployed on **Cloudflare Pages** with automatic deploys from GitHub.
+The app is deployed on **Cloudflare Pages** as a direct upload project (no Git connection). Builds happen locally and are pushed via Wrangler CLI.
 
 - **Pages project**: `pfluger-tina`
 - **Production URL**: `pfluger-tina.pages.dev`
-- **Production branch**: `main` (pushes trigger automatic deploys)
-- **Build command**: `npm run build`
-- **Output directory**: `dist`
-- **Environment variables**: Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the Cloudflare Pages dashboard under Settings > Variables and Secrets
+- **Custom domain**: `tina.pflugerarchitects.com`
+
+#### How to deploy
+
+Build locally, then push to Cloudflare:
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name=pfluger-tina --branch=main
+```
+
+Wrangler will prompt for Cloudflare login on first use. The `--branch=main` flag ensures it deploys to production (without it, you get a preview URL).
+
+Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) are read from your local `.env` at build time and baked into the output. They do not need to be set in the Cloudflare dashboard.
 
 ### DNS - Bluehost
 
